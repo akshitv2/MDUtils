@@ -65,4 +65,4 @@ if __name__ == ".__main__":
     process_folder(args.input, args.output, args.key)
 
 if __name__ == "__main__":
-    process_folder("F:\Git\MDUtils\sample_mds", "F:\Git\MDUtils\sample_encrypted_mds", "")
+    process_folder(r"F:\Git\test-jekyll-publishing\original", r"F:\Git\test-jekyll-publishing\pages", "d48f07feb6fc19b9d10e75eb9c5d9d69")
