@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launch Config Generator</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f3;
+            --card-bg: #ffffff;
+            --text-main: #1b3b22;
+            --text-muted: #4d6a52;
+            --border-color: #c1d3be;
+            --accent-color: #2d7a42;
+            --accent-hover: #1b5e2b;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--text-main);
+        }
+
+        select, input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            background-color: #fff;
+            outline: none;
+        }
+
+        select:focus, input[type="text"]:focus, input[type="password"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .encrypted-fields {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8fdf9;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .result-group {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .result-group.active {
+            display: block;
+        }
+
+        .url-box {
+            word-break: break-all;
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .status-msg {
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .link-action {
+            display: inline-block;
+            color: var(--accent-color);
+            text-decoration: underline;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .link-action:hover {
+            color: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Launch Config Generator</h1>
+
+    <form id="configForm">
+        <div class="form-group">
+            <label for="theme">Theme</label>
+            <select id="theme">
+                <option value="medium">Medium</option>
+                <option value="whimsical">Whimsical</option>
+                <option value="diary">Diary</option>
+                <option value="techno">Techno</option>
+                <option value="greenery">Greenery</option>
+                <option value="school">School</option>
+                <option value="spring">Spring</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="index">Index YAML Path</label>
+            <input type="text" id="index" value="index.yaml" placeholder="e.g., index.yaml">
+        </div>
+
+        <div class="form-group checkbox-group">
+            <input type="checkbox" id="encrypted">
+            <label for="encrypted">Encrypted</label>
+        </div>
+
+        <div id="encryptedFields" class="encrypted-fields" style="display: none;">
+            <div class="form-group">
+                <label for="cookieKey">Cookie Key Name</label>
+                <input type="text" id="cookieKey" value="mickey" placeholder="e.g., mickey">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="cookieValue">Secret Key Value (Sets Browser Cookie Locally)</label>
+                <input type="password" id="cookieValue" placeholder="Leave empty to keep existing cookie">
+                <div id="cookieStatus" class="status-msg"></div>
+            </div>
+        </div>
+
+        <button type="submit">Generate Link & Set Cookie</button>
+    </form>
+
+    <div class="result-group" id="result">
+        <label>Generated URL</label>
+        <div class="url-box" id="urlBox"></div>
+        <a id="launchLink" class="link-action" target="_blank">Launch Site &rarr;</a>
+    </div>
+</div>
+
+<script>
+    const encryptedCheckbox = document.getElementById('encrypted');
+    const encryptedFields = document.getElementById('encryptedFields');
+    const configForm = document.getElementById('configForm');
+    const resultDiv = document.getElementById('result');
+    const urlBox = document.getElementById('urlBox');
+    const launchLink = document.getElementById('launchLink');
+    const cookieStatus = document.getElementById('cookieStatus');
+
+    encryptedCheckbox.addEventListener('change', () => {
+        encryptedFields.style.display = encryptedCheckbox.checked ? 'block' : 'none';
+    });
+
+    function setCookie(name, value, days = 7) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = "; expires=" + date.toUTCString();
+        document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Strict";
+    }
+
+    configForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const theme = document.getElementById('theme').value;
+        const index = document.getElementById('index').value.trim();
+        const encrypted = encryptedCheckbox.checked;
+        const cookieKey = document.getElementById('cookieKey').value.trim();
+        const cookieValue = document.getElementById('cookieValue').value;
+
+        const params = new URLSearchParams();
+
+        if (theme) params.set('theme', theme);
+        if (index) params.set('index', index);
+
+        if (encrypted) {
+            params.set('encrypted', 'true');
+            if (cookieKey) {
+                params.set('cookieKey', cookieKey);
+
+                if (cookieValue !== '') {
+                    setCookie(cookieKey, cookieValue);
+                    cookieStatus.textContent = `Cookie "${cookieKey}" updated!`;
+                } else {
+                    cookieStatus.textContent = `Using existing cookie for "${cookieKey}".`;
+                }
+            }
+        } else {
+            cookieStatus.textContent = '';
+        }
+
+        const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'index.html';
+        const generatedUrl = `${baseUrl}?${params.toString()}`;
+
+        urlBox.textContent = generatedUrl;
+        launchLink.href = generatedUrl;
+        resultDiv.classList.add('active');
+    });
+</script>
+
+</body>
+</html>
