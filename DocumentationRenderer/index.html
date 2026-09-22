@@ -25,6 +25,7 @@
     <script>
         // Apply theme immediately to prevent Flash of Unstyled Content
         const urlParams = new URLSearchParams(window.location.search);
+        const indexFile = urlParams.get('index') || 'index.yaml';
         const validThemes = ['medium', 'whimsical', 'diary', 'techno', 'greenery', 'school', 'spring'];
         let currentTheme = urlParams.get('theme');
         if (!validThemes.includes(currentTheme)) currentTheme = 'medium';
@@ -841,8 +842,8 @@
 
     async function init() {
         try {
-            const response = await fetch('index.yaml');
-            if (!response.ok) throw new Error(`Failed to load index.yaml (${response.status})`);
+            const response = await fetch(indexFile);
+            if (!response.ok) throw new Error(`Failed to load ${indexFile} (${response.status})`);
             const yamlText = await response.text();
             siteConfig = jsyaml.load(yamlText);
 
@@ -859,7 +860,7 @@
         } catch (err) {
             document.getElementById('content').innerHTML = `
           <h1>Configuration Error</h1>
-          <p>Could not load or parse <code>index.yaml</code>.</p>
+          <p>Could not load or parse <code>${indexFile}</code>.</p>
           <pre><code>${err.message}</code></pre>
         `;
         }
@@ -911,9 +912,10 @@
         const a = document.createElement('a');
         a.textContent = title;
 
+        const resolvedPath = resolveRelativePath(indexFile, path);
         const currentSearch = window.location.search;
-        a.href = `${currentSearch}#/${path}`;
-        a.dataset.path = path;
+        a.href = `${currentSearch}#/${resolvedPath}`;
+        a.dataset.path = resolvedPath;
         return a;
     }
 
@@ -932,7 +934,8 @@
 
             function renderNode(title, value) {
                 if (typeof value === 'string') {
-                    return `<li><a href="${currentSearch}#/${value}">${title}</a></li>`;
+                    const resolvedPath = resolveRelativePath(indexFile, value);
+                    return `<li><a href="${currentSearch}#/${resolvedPath}">${title}</a></li>`;
                 } else if (typeof value === 'object' && value !== null) {
                     return `
                     <li style="margin-top: 1rem;">

@@ -1,0 +1,5 @@
+site_name: Example
+nav:
+  Home: homepage.md
+  Getting Started:
+    Installation: installation.md
