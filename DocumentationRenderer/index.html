@@ -381,12 +381,10 @@
             const base = new URL(basePath, window.location.href);
             const resolved = new URL(relativePath, base);
 
-            // If basePath is a full HTTP(S) URL, return the full resolved URL
             if (/^https?:\/\//i.test(basePath)) {
                 return resolved.href;
             }
 
-            // For local relative paths, return relative to the current directory
             const currentDir = new URL('./', window.location.href);
             if (resolved.href.startsWith(currentDir.href)) {
                 return resolved.href.substring(currentDir.href.length);
@@ -570,11 +568,8 @@
 
                 markdown = markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
 
-                contentEl.innerHTML = marked.parse(markdown, {
+                const rawHtml = marked.parse(markdown, {
                     walkTokens(token) {
-                        if (token.type === 'image' && token.href) {
-                            token.href = resolveRelativePath(hashPath, token.href);
-                        }
                         if (token.type === 'link' && token.href) {
                             if (token.href.startsWith('#')) {
                                 token.href = `${currentSearch}#/${hashPath}${token.href}`;
@@ -586,20 +581,37 @@
                     }
                 });
 
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(rawHtml, 'text/html');
+
+                const images = doc.querySelectorAll('img');
+                for (const img of images) {
+                    const rawSrc = img.getAttribute('src');
+                    if (rawSrc && !rawSrc.startsWith('data:')) {
+                        const resolvedSrc = resolveRelativePath(hashPath, rawSrc);
+                        if (isEncrypted) {
+                            img.setAttribute('data-src', resolvedSrc);
+                            img.removeAttribute('src');
+                        } else {
+                            img.setAttribute('src', resolvedSrc);
+                        }
+                    }
+                }
+
+                contentEl.innerHTML = doc.body.innerHTML;
+
                 if (isEncrypted) {
-                    const images = contentEl.querySelectorAll('img');
-                    for (const img of images) {
-                        const srcPath = img.getAttribute('src');
-                        if (srcPath && !srcPath.startsWith('data:')) {
-                            try {
-                                const imgRes = await fetch(srcPath);
-                                if (imgRes.ok) {
-                                    const encryptedImgText = await imgRes.text();
-                                    img.src = decryptPayload(encryptedImgText, secretKey, true, srcPath);
-                                }
-                            } catch (e) {
-                                console.error(`Failed to load encrypted image ${srcPath}`, e);
+                    const encryptedImages = contentEl.querySelectorAll('img[data-src]');
+                    for (const img of encryptedImages) {
+                        const srcPath = img.getAttribute('data-src');
+                        try {
+                            const imgRes = await fetch(srcPath);
+                            if (imgRes.ok) {
+                                const encryptedImgText = await imgRes.text();
+                                img.src = decryptPayload(encryptedImgText, secretKey, true, srcPath);
                             }
+                        } catch (e) {
+                            console.error(`Failed to load encrypted image ${srcPath}`, e);
                         }
                     }
                 }
