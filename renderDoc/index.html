@@ -398,8 +398,7 @@
     async function init() {
         try {
             if (isEncrypted) {
-                const cookieKey = urlParams.get('cookieKey');
-                if (!cookieKey) throw new Error('Query parameter "cookieKey" is required when encrypted=true.');
+                const cookieKey = urlParams.get('cookieKey') || 'mickey';
                 secretKey = getCookie(cookieKey);
                 if (!secretKey) throw new Error(`Cookie "${cookieKey}" not found or empty.`);
             }
